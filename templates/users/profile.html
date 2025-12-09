@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}My Profile{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-2xl font-bold text-dark mb-8">👤 My Profile</h1>
+    
+    <div class="max-w-2xl">
+        <div class="bg-white rounded-xl shadow-sm p-6">
+            <div class="space-y-4">
+                <div class="flex justify-between items-center border-b pb-4">
+                    <div>
+                        <p class="text-gray-600">Username</p>
+                        <p class="font-medium">{{ user.username }}</p>
+                    </div>
+                </div>
+                
+                <div class="flex justify-between items-center border-b pb-4">
+                    <div>
+                        <p class="text-gray-600">Email</p>
+                        <p class="font-medium">{{ user.email|default:'Not set' }}</p>
+                    </div>
+                </div>
+                
+                <div class="flex justify-between items-center border-b pb-4">
+                    <div>
+                        <p class="text-gray-600">Member Since</p>
+                        <p class="font-medium">{{ user.date_joined|date:"M d, Y" }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-6 flex gap-4">
+                <a href="{% url 'users:dashboard' %}" class="bg-gray-200 hover:bg-gray-300 text-dark px-6 py-2 rounded-lg transition">
+                    Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

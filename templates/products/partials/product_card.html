@@ -1,0 +1,104 @@
+<!-- Product Card Component -->
+<div class="bg-white rounded-xl shadow-sm hover:shadow-lg transition overflow-hidden group">
+    <a href="{{ product.get_absolute_url }}">
+        <div class="relative aspect-square bg-gray-100 flex items-center justify-center overflow-hidden">
+            {% if product.main_image %}
+            <img src="{{ product.main_image.url }}" alt="{{ product.name }}" class="w-full h-full object-contain group-hover:scale-105 transition">
+            {% else %}
+            <span class="text-6xl">
+                {% if product.category.name == 'Mobiles' %}📱
+                {% elif product.category.name == 'Laptops' %}💻
+                {% elif product.category.name == 'Accessories' %}🎧
+                {% elif product.category.name == 'TVs' %}📺
+                {% else %}📦
+                {% endif %}
+            </span>
+            {% endif %}
+            
+            <!-- Badges -->
+            <div class="absolute top-2 left-2 flex flex-col gap-1">
+                {% if product.discount_percentage > 0 %}
+                <span class="bg-accent text-white text-xs px-2 py-1 rounded">-{{ product.discount_percentage }}%</span>
+                {% endif %}
+                {% if product.is_bestseller %}
+                <span class="bg-yellow-500 text-white text-xs px-2 py-1 rounded">Bestseller</span>
+                {% endif %}
+                {% if product.is_new_arrival %}
+                <span class="bg-blue-500 text-white text-xs px-2 py-1 rounded">New</span>
+                {% endif %}
+            </div>
+            
+            <!-- Stock Status -->
+            {% if not product.in_stock %}
+            <div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                <span class="text-white font-semibold">Out of Stock</span>
+            </div>
+            {% elif product.is_low_stock %}
+            <span class="absolute bottom-2 left-2 bg-orange-500 text-white text-xs px-2 py-1 rounded">Only {{ product.stock }} left!</span>
+            {% endif %}
+        </div>
+    </a>
+    
+    <div class="p-4">
+        <!-- Category -->
+        {% if product.category %}
+        <span class="text-xs text-gray-500 uppercase">{{ product.category.name }}</span>
+        {% endif %}
+        
+        <!-- Name -->
+        <a href="{{ product.get_absolute_url }}">
+            <h3 class="font-semibold text-dark mt-1 line-clamp-2 group-hover:text-primary transition">{{ product.name }}</h3>
+        </a>
+        
+        <!-- Rating -->
+        {% if product.rating > 0 %}
+        <div class="flex items-center mt-1">
+            <span class="text-yellow-400 text-sm">
+                {% for i in "12345" %}
+                    {% if forloop.counter <= product.rating %}★{% else %}☆{% endif %}
+                {% endfor %}
+            </span>
+            <span class="text-xs text-gray-500 ml-1">({{ product.review_count }})</span>
+        </div>
+        {% endif %}
+        
+        <!-- Price -->
+        <div class="mt-2">
+            <span class="text-lg font-bold text-primary">₹{{ product.price }}</span>
+            {% if product.compare_price %}
+            <span class="text-sm text-gray-400 line-through ml-2">₹{{ product.compare_price }}</span>
+            {% endif %}
+        </div>
+        
+        <!-- EMI -->
+        {% if product.emi_available %}
+        <p class="text-xs text-gray-500 mt-1">
+            {% if product.no_cost_emi %}No Cost EMI{% else %}EMI{% endif %} from ₹{{ product.get_emi_amount }}/mo
+        </p>
+        {% endif %}
+        
+        <!-- Add to Cart -->
+        {% if product.in_stock %}
+        <form 
+            hx-post="{% url 'cart:cart_add' product.id %}"
+            hx-swap="none"
+            hx-trigger="submit"
+            class="mt-3"
+        >
+            {% csrf_token %}
+            <input type="hidden" name="quantity" value="1">
+            <button 
+                type="submit"
+                class="w-full bg-primary hover:bg-green-600 text-white py-2 rounded-lg font-medium transition flex items-center justify-center gap-2"
+            >
+                <span>🛒</span>
+                <span>Add to Cart</span>
+            </button>
+        </form>
+        {% else %}
+        <button class="w-full bg-gray-300 text-gray-500 py-2 rounded-lg font-medium mt-3 cursor-not-allowed">
+            Out of Stock
+        </button>
+        {% endif %}
+    </div>
+</div>

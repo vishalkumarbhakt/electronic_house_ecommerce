@@ -1,0 +1,253 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Buy Electronics Online{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="bg-gradient-to-r from-dark to-gray-800 text-white">
+    <div class="container mx-auto px-4 py-16">
+        <div class="flex flex-col md:flex-row items-center">
+            <div class="md:w-1/2 mb-8 md:mb-0">
+                <span class="inline-block bg-accent text-white text-sm px-3 py-1 rounded-full mb-4">🔥 Hot Deal</span>
+                <h1 class="text-4xl md:text-5xl font-bold mb-4">
+                    iPhone 15 Pro Max
+                </h1>
+                <p class="text-xl text-gray-300 mb-6">
+                    Experience the future of smartphones. A17 Pro chip, Titanium design, 48MP camera.
+                </p>
+                <div class="flex items-center space-x-4 mb-6">
+                    <span class="text-3xl font-bold text-primary">₹1,59,900</span>
+                    <span class="text-xl text-gray-400 line-through">₹1,79,900</span>
+                    <span class="bg-accent text-white px-2 py-1 rounded text-sm">11% OFF</span>
+                </div>
+                <div class="flex space-x-4">
+                    <a href="{% url 'products:product_list' %}" class="bg-primary hover:bg-green-600 text-white px-8 py-3 rounded-lg font-semibold transition">
+                        Shop Now
+                    </a>
+                    <a href="{% url 'products:product_list' %}?category=mobiles" class="border border-white hover:bg-white hover:text-dark text-white px-8 py-3 rounded-lg font-semibold transition">
+                        View All Mobiles
+                    </a>
+                </div>
+            </div>
+            <div class="md:w-1/2 flex justify-center">
+                <div class="text-9xl">📱</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Banner -->
+<section class="bg-white py-8 border-b">
+    <div class="container mx-auto px-4">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+            <div class="flex flex-col items-center">
+                <span class="text-3xl mb-2">🚚</span>
+                <span class="font-semibold">Free Shipping</span>
+                <span class="text-sm text-gray-500">On orders ₹999+</span>
+            </div>
+            <div class="flex flex-col items-center">
+                <span class="text-3xl mb-2">🔄</span>
+                <span class="font-semibold">Easy Returns</span>
+                <span class="text-sm text-gray-500">7-day return policy</span>
+            </div>
+            <div class="flex flex-col items-center">
+                <span class="text-3xl mb-2">💳</span>
+                <span class="font-semibold">EMI Available</span>
+                <span class="text-sm text-gray-500">No cost EMI options</span>
+            </div>
+            <div class="flex flex-col items-center">
+                <span class="text-3xl mb-2">🛡️</span>
+                <span class="font-semibold">Genuine Products</span>
+                <span class="text-sm text-gray-500">100% authentic</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Categories Grid -->
+<section class="py-12">
+    <div class="container mx-auto px-4">
+        <h2 class="text-2xl font-bold text-dark mb-8">Shop by Category</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+            {% for category in categories %}
+            <a href="{% url 'products:category_detail' slug=category.slug %}" class="group">
+                <div class="bg-white rounded-xl p-6 text-center shadow-sm hover:shadow-lg transition">
+                    <div class="text-4xl mb-3">
+                        {% if category.name == 'Mobiles' %}📱
+                        {% elif category.name == 'Laptops' %}💻
+                        {% elif category.name == 'Accessories' %}🎧
+                        {% elif category.name == 'TVs' %}📺
+                        {% elif category.name == 'Appliances' %}🏠
+                        {% elif category.name == 'Gaming' %}🎮
+                        {% else %}🔌
+                        {% endif %}
+                    </div>
+                    <h3 class="font-semibold text-dark group-hover:text-primary transition">{{ category.name }}</h3>
+                    <p class="text-sm text-gray-500">{{ category.product_count }} products</p>
+                </div>
+            </a>
+            {% empty %}
+            <!-- Default categories if none exist -->
+            <a href="{% url 'products:product_list' %}?category=mobiles" class="group">
+                <div class="bg-white rounded-xl p-6 text-center shadow-sm hover:shadow-lg transition">
+                    <div class="text-4xl mb-3">📱</div>
+                    <h3 class="font-semibold text-dark group-hover:text-primary transition">Mobiles</h3>
+                    <p class="text-sm text-gray-500">Smartphones</p>
+                </div>
+            </a>
+            <a href="{% url 'products:product_list' %}?category=laptops" class="group">
+                <div class="bg-white rounded-xl p-6 text-center shadow-sm hover:shadow-lg transition">
+                    <div class="text-4xl mb-3">💻</div>
+                    <h3 class="font-semibold text-dark group-hover:text-primary transition">Laptops</h3>
+                    <p class="text-sm text-gray-500">Notebooks</p>
+                </div>
+            </a>
+            <a href="{% url 'products:product_list' %}?category=accessories" class="group">
+                <div class="bg-white rounded-xl p-6 text-center shadow-sm hover:shadow-lg transition">
+                    <div class="text-4xl mb-3">🎧</div>
+                    <h3 class="font-semibold text-dark group-hover:text-primary transition">Accessories</h3>
+                    <p class="text-sm text-gray-500">Gadgets</p>
+                </div>
+            </a>
+            <a href="{% url 'products:product_list' %}?category=tvs" class="group">
+                <div class="bg-white rounded-xl p-6 text-center shadow-sm hover:shadow-lg transition">
+                    <div class="text-4xl mb-3">📺</div>
+                    <h3 class="font-semibold text-dark group-hover:text-primary transition">TVs</h3>
+                    <p class="text-sm text-gray-500">Smart TVs</p>
+                </div>
+            </a>
+            <a href="{% url 'products:product_list' %}?category=appliances" class="group">
+                <div class="bg-white rounded-xl p-6 text-center shadow-sm hover:shadow-lg transition">
+                    <div class="text-4xl mb-3">🏠</div>
+                    <h3 class="font-semibold text-dark group-hover:text-primary transition">Appliances</h3>
+                    <p class="text-sm text-gray-500">Home</p>
+                </div>
+            </a>
+            <a href="{% url 'products:product_list' %}?category=gaming" class="group">
+                <div class="bg-white rounded-xl p-6 text-center shadow-sm hover:shadow-lg transition">
+                    <div class="text-4xl mb-3">🎮</div>
+                    <h3 class="font-semibold text-dark group-hover:text-primary transition">Gaming</h3>
+                    <p class="text-sm text-gray-500">Consoles</p>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Featured Products -->
+{% if featured_products %}
+<section class="py-12 bg-gray-100">
+    <div class="container mx-auto px-4">
+        <div class="flex justify-between items-center mb-8">
+            <h2 class="text-2xl font-bold text-dark">Featured Products</h2>
+            <a href="{% url 'products:product_list' %}" class="text-primary hover:underline">View All →</a>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {% for product in featured_products %}
+            {% include 'products/partials/product_card.html' with product=product %}
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Bestsellers -->
+{% if bestsellers %}
+<section class="py-12">
+    <div class="container mx-auto px-4">
+        <div class="flex justify-between items-center mb-8">
+            <h2 class="text-2xl font-bold text-dark">🏆 Bestsellers</h2>
+            <a href="{% url 'products:product_list' %}" class="text-primary hover:underline">View All →</a>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {% for product in bestsellers %}
+            {% include 'products/partials/product_card.html' with product=product %}
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- New Arrivals -->
+{% if new_arrivals %}
+<section class="py-12 bg-gray-100">
+    <div class="container mx-auto px-4">
+        <div class="flex justify-between items-center mb-8">
+            <h2 class="text-2xl font-bold text-dark">✨ New Arrivals</h2>
+            <a href="{% url 'products:product_list' %}" class="text-primary hover:underline">View All →</a>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {% for product in new_arrivals %}
+            {% include 'products/partials/product_card.html' with product=product %}
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Bundle Deals -->
+{% if deals %}
+<section class="py-12">
+    <div class="container mx-auto px-4">
+        <h2 class="text-2xl font-bold text-dark mb-8">🎁 Bundle Deals</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {% for deal in deals %}
+            <div class="bg-gradient-to-r from-primary to-green-600 rounded-xl p-6 text-white">
+                <h3 class="text-xl font-bold mb-2">{{ deal.name }}</h3>
+                <p class="mb-4">{{ deal.description }}</p>
+                <div class="flex items-center space-x-4">
+                    <span class="text-2xl font-bold">₹{{ deal.bundle_price }}</span>
+                    <span class="line-through opacity-75">₹{{ deal.total_original_price }}</span>
+                    <span class="bg-accent px-2 py-1 rounded text-sm">{{ deal.discount_percentage }}% OFF</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Why Choose Us -->
+<section class="py-12 bg-dark text-white">
+    <div class="container mx-auto px-4">
+        <h2 class="text-2xl font-bold text-center mb-12">Why Choose Electronic House?</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="text-center">
+                <div class="text-5xl mb-4">✓</div>
+                <h3 class="text-xl font-semibold mb-2">100% Genuine Products</h3>
+                <p class="text-gray-400">All products are sourced directly from authorized distributors with manufacturer warranty.</p>
+            </div>
+            <div class="text-center">
+                <div class="text-5xl mb-4">🚀</div>
+                <h3 class="text-xl font-semibold mb-2">Fast Delivery</h3>
+                <p class="text-gray-400">Express delivery available for major cities. Same-day delivery in Lucknow.</p>
+            </div>
+            <div class="text-center">
+                <div class="text-5xl mb-4">💰</div>
+                <h3 class="text-xl font-semibold mb-2">Best Prices</h3>
+                <p class="text-gray-400">We offer competitive prices with easy EMI options and exclusive deals.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Newsletter -->
+<section class="py-12 bg-primary">
+    <div class="container mx-auto px-4 text-center">
+        <h2 class="text-2xl font-bold text-white mb-4">Subscribe for Exclusive Deals</h2>
+        <p class="text-white opacity-90 mb-6">Get notified about new products and special offers!</p>
+        <form class="max-w-md mx-auto flex">
+            <input 
+                type="email" 
+                placeholder="Enter your email"
+                class="flex-1 px-4 py-3 rounded-l-lg focus:outline-none"
+            >
+            <button type="submit" class="bg-dark hover:bg-gray-800 text-white px-6 py-3 rounded-r-lg font-semibold transition">
+                Subscribe
+            </button>
+        </form>
+    </div>
+</section>
+{% endblock %}

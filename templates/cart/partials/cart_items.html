@@ -1,0 +1,73 @@
+{% load humanize %}
+
+{% for item in cart_items %}
+<div class="flex items-center p-6 border-b last:border-b-0" id="cart-item-{{ item.product.id }}">
+    <!-- Product Image -->
+    <div class="w-20 h-20 bg-gray-100 rounded-lg flex-shrink-0 flex items-center justify-center overflow-hidden">
+        {% if item.product.main_image %}
+        <img src="{{ item.product.main_image.url }}" alt="{{ item.product.name }}" class="max-w-full max-h-full object-contain">
+        {% else %}
+        <span class="text-3xl">📦</span>
+        {% endif %}
+    </div>
+    
+    <!-- Product Info -->
+    <div class="ml-4 flex-1">
+        <a href="{{ item.product.get_absolute_url }}" class="font-semibold text-dark hover:text-primary">
+            {{ item.product.name }}
+        </a>
+        {% if item.product.category %}
+        <p class="text-sm text-gray-500">{{ item.product.category.name }}</p>
+        {% endif %}
+        <p class="text-primary font-semibold mt-1">₹{{ item.product.price }}</p>
+    </div>
+    
+    <!-- Quantity -->
+    <div class="flex items-center mx-4">
+        <form 
+            hx-post="{% url 'cart:cart_update' item.product.id %}"
+            hx-target="#cart-items-container"
+            hx-swap="innerHTML"
+            class="flex items-center border rounded-lg"
+        >
+            {% csrf_token %}
+            <button 
+                type="submit"
+                name="quantity"
+                value="{{ item.quantity|add:'-1' }}"
+                class="px-3 py-1 hover:bg-gray-100"
+                {% if item.quantity <= 1 %}disabled{% endif %}
+            >-</button>
+            <span class="px-4 py-1 border-x">{{ item.quantity }}</span>
+            <button 
+                type="submit"
+                name="quantity"
+                value="{{ item.quantity|add:'1' }}"
+                class="px-3 py-1 hover:bg-gray-100"
+                {% if item.quantity >= item.product.stock %}disabled{% endif %}
+            >+</button>
+        </form>
+    </div>
+    
+    <!-- Item Total -->
+    <div class="text-right mx-4">
+        <p class="font-semibold text-dark">₹{{ item.total_price }}</p>
+    </div>
+    
+    <!-- Remove Button -->
+    <form 
+        hx-post="{% url 'cart:cart_remove' item.product.id %}"
+        hx-target="#cart-items-container"
+        hx-swap="innerHTML"
+    >
+        {% csrf_token %}
+        <button type="submit" class="text-red-500 hover:text-red-600 p-2">
+            ✕
+        </button>
+    </form>
+</div>
+{% empty %}
+<div class="p-12 text-center">
+    <p class="text-gray-500">Your cart is empty</p>
+</div>
+{% endfor %}

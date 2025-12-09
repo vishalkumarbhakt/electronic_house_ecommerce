@@ -1,0 +1,5 @@
+<!-- Mini Cart for Header -->
+<div class="text-sm">
+    <p class="font-semibold">{{ cart|length }} item{% if cart|length != 1 %}s{% endif %}</p>
+    <p class="text-primary">₹{{ cart.get_total_price }}</p>
+</div>
