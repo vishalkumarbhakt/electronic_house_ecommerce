@@ -26,6 +26,11 @@ ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 # Application definition
 INSTALLED_APPS = [
+    # Unfold admin theme (must be before django.contrib.admin)
+    'unfold',
+    'unfold.contrib.filters',
+    'unfold.contrib.forms',
+    
     # Django apps
     'django.contrib.admin',
     'django.contrib.auth',
@@ -43,6 +48,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'django_filters',
     'django_extensions',
+    'django_htmx',
     
     # Local apps
     'core.apps.CoreConfig',
@@ -62,6 +68,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django_htmx.middleware.HtmxMiddleware',
 ]
 
 ROOT_URLCONF = 'electronic_house.urls'
@@ -266,3 +273,199 @@ LOGGING = {
         },
     },
 }
+
+
+# Django Unfold Admin Theme Configuration
+# Premium admin panel with Tailwind CSS, dark mode, and modern UI
+UNFOLD = {
+    "SITE_TITLE": "Electronic House",
+    "SITE_HEADER": "Electronic House Admin",
+    "SITE_SUBHEADER": "Premium Electronics E-Commerce Platform",
+    "SITE_SYMBOL": "shopping_cart",  # Material icon
+    "SHOW_HISTORY": True,
+    "SHOW_VIEW_ON_SITE": True,
+    "ENVIRONMENT": "electronic_house.settings.environment_callback",
+    "COLORS": {
+        "primary": {
+            "50": "#f0fdf4",
+            "100": "#dcfce7",
+            "200": "#bbf7d0",
+            "300": "#86efac",
+            "400": "#4ade80",
+            "500": "#22c55e",
+            "600": "#00A651",  # Primary green color
+            "700": "#15803d",
+            "800": "#166534",
+            "900": "#14532d",
+            "950": "#052e16",
+        },
+    },
+    "SIDEBAR": {
+        "show_search": True,
+        "show_all_applications": True,
+        "navigation": [
+            {
+                "title": "Dashboard",
+                "separator": True,
+                "items": [
+                    {
+                        "title": "Dashboard",
+                        "icon": "dashboard",
+                        "link": "/admin/",
+                    },
+                ],
+            },
+            {
+                "title": "Products & Catalog",
+                "separator": True,
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": "Products",
+                        "icon": "inventory_2",
+                        "link": "/admin/products/product/",
+                        "badge": "electronic_house.settings.products_badge_callback",
+                    },
+                    {
+                        "title": "Categories",
+                        "icon": "category",
+                        "link": "/admin/products/category/",
+                    },
+                    {
+                        "title": "Brands",
+                        "icon": "branding_watermark",
+                        "link": "/admin/products/brand/",
+                    },
+                    {
+                        "title": "Bundle Deals",
+                        "icon": "local_offer",
+                        "link": "/admin/products/bundledeal/",
+                    },
+                    {
+                        "title": "Reviews",
+                        "icon": "star",
+                        "link": "/admin/products/productreview/",
+                    },
+                ],
+            },
+            {
+                "title": "Orders & Sales",
+                "separator": True,
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": "Orders",
+                        "icon": "shopping_bag",
+                        "link": "/admin/orders/order/",
+                        "badge": "electronic_house.settings.orders_badge_callback",
+                    },
+                    {
+                        "title": "Customers",
+                        "icon": "people",
+                        "link": "/admin/orders/customer/",
+                    },
+                    {
+                        "title": "Coupons",
+                        "icon": "confirmation_number",
+                        "link": "/admin/orders/coupon/",
+                    },
+                    {
+                        "title": "Wishlists",
+                        "icon": "favorite",
+                        "link": "/admin/orders/wishlist/",
+                    },
+                ],
+            },
+            {
+                "title": "Users & Authentication",
+                "separator": True,
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": "Users",
+                        "icon": "person",
+                        "link": "/admin/auth/user/",
+                    },
+                    {
+                        "title": "Groups",
+                        "icon": "group",
+                        "link": "/admin/auth/group/",
+                    },
+                ],
+            },
+        ],
+    },
+    "TABS": [
+        {
+            "models": ["products.product"],
+            "items": [
+                {
+                    "title": "All Products",
+                    "link": "/admin/products/product/",
+                },
+                {
+                    "title": "Featured",
+                    "link": "/admin/products/product/?is_featured__exact=1",
+                },
+                {
+                    "title": "Low Stock",
+                    "link": "/admin/products/product/?stock__lte=10",
+                },
+                {
+                    "title": "Out of Stock",
+                    "link": "/admin/products/product/?stock__exact=0",
+                },
+            ],
+        },
+        {
+            "models": ["orders.order"],
+            "items": [
+                {
+                    "title": "All Orders",
+                    "link": "/admin/orders/order/",
+                },
+                {
+                    "title": "Pending",
+                    "link": "/admin/orders/order/?status__exact=pending",
+                },
+                {
+                    "title": "Processing",
+                    "link": "/admin/orders/order/?status__exact=processing",
+                },
+                {
+                    "title": "Shipped",
+                    "link": "/admin/orders/order/?status__exact=shipped",
+                },
+                {
+                    "title": "Delivered",
+                    "link": "/admin/orders/order/?status__exact=delivered",
+                },
+            ],
+        },
+    ],
+}
+
+
+def environment_callback(request):
+    """Return environment indicator for admin header."""
+    if DEBUG:
+        return ["Development", "warning"]
+    return ["Production", "success"]
+
+
+def products_badge_callback(request):
+    """Return badge count for products sidebar."""
+    from products.models import Product
+    low_stock = Product.objects.filter(is_active=True, stock__lte=10, stock__gt=0).count()
+    if low_stock > 0:
+        return str(low_stock)
+    return None
+
+
+def orders_badge_callback(request):
+    """Return badge count for pending orders."""
+    from orders.models import Order
+    pending = Order.objects.filter(status='pending').count()
+    if pending > 0:
+        return str(pending)
+    return None

@@ -1,10 +1,12 @@
 from django.contrib import admin
 from django.utils.html import format_html
 from django.utils import timezone
+from unfold.admin import ModelAdmin, TabularInline
+from unfold.decorators import action, display
 from .models import Customer, Order, OrderItem, Wishlist, Coupon
 
 
-class OrderItemInline(admin.TabularInline):
+class OrderItemInline(TabularInline):
     """Inline for order items."""
     model = OrderItem
     extra = 0
@@ -25,8 +27,8 @@ class OrderItemInline(admin.TabularInline):
 
 
 @admin.register(Customer)
-class CustomerAdmin(admin.ModelAdmin):
-    """Admin for Customer model."""
+class CustomerAdmin(ModelAdmin):
+    """Admin for Customer model with Unfold styling."""
     list_display = ['full_name', 'email', 'phone', 'city', 'state', 'order_count', 'created_at']
     list_filter = ['state', 'city', 'created_at']
     search_fields = ['first_name', 'last_name', 'email', 'phone', 'pincode']
@@ -46,14 +48,14 @@ class CustomerAdmin(admin.ModelAdmin):
         }),
     )
     
+    @display(description="Orders")
     def order_count(self, obj):
         return obj.orders.count()
-    order_count.short_description = 'Orders'
 
 
 @admin.register(Order)
-class OrderAdmin(admin.ModelAdmin):
-    """Enhanced Admin for Order model."""
+class OrderAdmin(ModelAdmin):
+    """Enhanced Admin for Order model with Unfold styling."""
     list_display = [
         'order_number', 'customer_name', 'total_display', 'payment_status_badge',
         'status_badge', 'payment_method', 'emi_info', 'item_count', 'created_at'
@@ -104,15 +106,15 @@ class OrderAdmin(admin.ModelAdmin):
         }),
     )
     
+    @display(description="Customer")
     def customer_name(self, obj):
         return f"{obj.billing_first_name} {obj.billing_last_name}"
-    customer_name.short_description = 'Customer'
     
+    @display(description="Total", ordering="total")
     def total_display(self, obj):
         return format_html('<strong>₹{}</strong>', obj.total)
-    total_display.short_description = 'Total'
-    total_display.admin_order_field = 'total'
     
+    @display(description="Payment")
     def payment_status_badge(self, obj):
         colors = {
             'pending': '#FFA500',
@@ -125,8 +127,8 @@ class OrderAdmin(admin.ModelAdmin):
             '<span style="background-color: {}; color: white; padding: 3px 8px; border-radius: 3px; font-size: 11px;">{}</span>',
             color, obj.get_payment_status_display()
         )
-    payment_status_badge.short_description = 'Payment'
     
+    @display(description="Status")
     def status_badge(self, obj):
         colors = {
             'pending': '#FFA500',
@@ -143,32 +145,31 @@ class OrderAdmin(admin.ModelAdmin):
             '<span style="background-color: {}; color: white; padding: 3px 8px; border-radius: 3px; font-size: 11px;">{}</span>',
             color, obj.get_status_display()
         )
-    status_badge.short_description = 'Status'
     
+    @display(description="EMI")
     def emi_info(self, obj):
         if obj.is_emi and obj.emi_months:
             return format_html('₹{}/mo × {}', obj.emi_monthly_amount, obj.emi_months)
         return '-'
-    emi_info.short_description = 'EMI'
     
     actions = ['mark_as_confirmed', 'mark_as_shipped', 'mark_as_delivered', 'export_orders_csv']
     
-    @admin.action(description='Mark selected as Confirmed')
+    @action(description='Mark selected as Confirmed')
     def mark_as_confirmed(self, request, queryset):
         updated = queryset.update(status='confirmed', confirmed_at=timezone.now())
         self.message_user(request, f'{updated} orders marked as confirmed.')
     
-    @admin.action(description='Mark selected as Shipped')
+    @action(description='Mark selected as Shipped')
     def mark_as_shipped(self, request, queryset):
         updated = queryset.update(status='shipped', shipped_at=timezone.now())
         self.message_user(request, f'{updated} orders marked as shipped.')
     
-    @admin.action(description='Mark selected as Delivered')
+    @action(description='Mark selected as Delivered')
     def mark_as_delivered(self, request, queryset):
         updated = queryset.update(status='delivered', delivered_at=timezone.now())
         self.message_user(request, f'{updated} orders marked as delivered.')
     
-    @admin.action(description='Export selected orders to CSV')
+    @action(description='Export selected orders to CSV')
     def export_orders_csv(self, request, queryset):
         import csv
         from django.http import HttpResponse
@@ -195,8 +196,8 @@ class OrderAdmin(admin.ModelAdmin):
 
 
 @admin.register(OrderItem)
-class OrderItemAdmin(admin.ModelAdmin):
-    """Admin for OrderItem model."""
+class OrderItemAdmin(ModelAdmin):
+    """Admin for OrderItem model with Unfold styling."""
     list_display = ['order', 'product_name', 'product_sku', 'product_price', 'quantity', 'total', 'warranty_months']
     list_filter = ['order__status', 'warranty_months']
     search_fields = ['order__order_number', 'product_name', 'product_sku']
@@ -204,8 +205,8 @@ class OrderItemAdmin(admin.ModelAdmin):
 
 
 @admin.register(Wishlist)
-class WishlistAdmin(admin.ModelAdmin):
-    """Admin for Wishlist model."""
+class WishlistAdmin(ModelAdmin):
+    """Admin for Wishlist model with Unfold styling."""
     list_display = ['user', 'product', 'created_at']
     list_filter = ['created_at']
     search_fields = ['user__username', 'product__name']
@@ -213,8 +214,8 @@ class WishlistAdmin(admin.ModelAdmin):
 
 
 @admin.register(Coupon)
-class CouponAdmin(admin.ModelAdmin):
-    """Admin for Coupon model."""
+class CouponAdmin(ModelAdmin):
+    """Admin for Coupon model with Unfold styling."""
     list_display = ['code', 'discount_type', 'discount_value', 'min_order_amount', 
                     'usage_display', 'is_active', 'valid_from', 'valid_to', 'is_valid_now']
     list_filter = ['discount_type', 'is_active', 'valid_from', 'valid_to']
@@ -233,15 +234,15 @@ class CouponAdmin(admin.ModelAdmin):
         }),
     )
     
+    @display(description="Usage")
     def usage_display(self, obj):
         if obj.usage_limit:
             return f"{obj.used_count}/{obj.usage_limit}"
         return f"{obj.used_count}/∞"
-    usage_display.short_description = 'Usage'
     
+    @display(description="Status")
     def is_valid_now(self, obj):
         if obj.is_valid():
             return format_html('<span style="color: green;">✓ Valid</span>')
         return format_html('<span style="color: red;">✗ Invalid</span>')
-    is_valid_now.short_description = 'Status'
 
