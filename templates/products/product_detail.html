@@ -1,0 +1,302 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ product.meta_title|default:product.name }}{% endblock %}
+{% block meta_description %}{{ product.meta_description|default:product.short_description }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Breadcrumb -->
+    <nav class="text-sm mb-6">
+        <a href="{% url 'home' %}" class="text-gray-500 hover:text-primary">Home</a>
+        <span class="mx-2 text-gray-400">/</span>
+        {% if product.category %}
+        <a href="{% url 'products:category_detail' slug=product.category.slug %}" class="text-gray-500 hover:text-primary">{{ product.category.name }}</a>
+        <span class="mx-2 text-gray-400">/</span>
+        {% endif %}
+        <span class="text-dark">{{ product.name }}</span>
+    </nav>
+    
+    <div class="bg-white rounded-xl shadow-sm p-6 lg:p-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Product Images -->
+            <div x-data="{ activeImage: '{{ product.main_image.url|default:'' }}' }">
+                <!-- Main Image -->
+                <div class="aspect-square bg-gray-100 rounded-xl flex items-center justify-center overflow-hidden mb-4">
+                    {% if product.main_image %}
+                    <img :src="activeImage" alt="{{ product.name }}" class="max-w-full max-h-full object-contain">
+                    {% else %}
+                    <span class="text-9xl">
+                        {% if product.category.name == 'Mobiles' %}📱
+                        {% elif product.category.name == 'Laptops' %}💻
+                        {% else %}📦{% endif %}
+                    </span>
+                    {% endif %}
+                </div>
+                
+                <!-- Thumbnail Gallery -->
+                {% if product.product_images.exists %}
+                <div class="flex gap-2 overflow-x-auto">
+                    {% if product.main_image %}
+                    <button 
+                        @click="activeImage = '{{ product.main_image.url }}'"
+                        class="w-20 h-20 rounded-lg border-2 overflow-hidden flex-shrink-0"
+                        :class="activeImage === '{{ product.main_image.url }}' ? 'border-primary' : 'border-gray-200'"
+                    >
+                        <img src="{{ product.main_image.url }}" alt="" class="w-full h-full object-contain">
+                    </button>
+                    {% endif %}
+                    {% for image in product.product_images.all %}
+                    <button 
+                        @click="activeImage = '{{ image.image.url }}'"
+                        class="w-20 h-20 rounded-lg border-2 overflow-hidden flex-shrink-0"
+                        :class="activeImage === '{{ image.image.url }}' ? 'border-primary' : 'border-gray-200'"
+                    >
+                        <img src="{{ image.image.url }}" alt="{{ image.alt_text }}" class="w-full h-full object-contain">
+                    </button>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Product Info -->
+            <div>
+                <!-- Badges -->
+                <div class="flex gap-2 mb-3">
+                    {% if product.is_bestseller %}
+                    <span class="bg-yellow-500 text-white text-xs px-2 py-1 rounded">🏆 Bestseller</span>
+                    {% endif %}
+                    {% if product.is_new_arrival %}
+                    <span class="bg-blue-500 text-white text-xs px-2 py-1 rounded">✨ New</span>
+                    {% endif %}
+                    {% if product.no_cost_emi %}
+                    <span class="bg-green-500 text-white text-xs px-2 py-1 rounded">No Cost EMI</span>
+                    {% endif %}
+                </div>
+                
+                <!-- Brand -->
+                {% if product.brand %}
+                <p class="text-sm text-gray-500 uppercase">{{ product.brand.name }}</p>
+                {% endif %}
+                
+                <!-- Name -->
+                <h1 class="text-2xl lg:text-3xl font-bold text-dark mb-2">{{ product.name }}</h1>
+                
+                <!-- Rating -->
+                {% if product.rating > 0 %}
+                <div class="flex items-center gap-2 mb-4">
+                    <span class="text-yellow-400 text-lg">
+                        {% for i in "12345" %}
+                            {% if forloop.counter <= product.rating %}★{% else %}☆{% endif %}
+                        {% endfor %}
+                    </span>
+                    <span class="text-gray-500">({{ product.review_count }} reviews)</span>
+                </div>
+                {% endif %}
+                
+                <!-- Price -->
+                <div class="flex items-center gap-4 mb-4">
+                    <span class="text-3xl font-bold text-primary">₹{{ product.price }}</span>
+                    {% if product.compare_price %}
+                    <span class="text-xl text-gray-400 line-through">₹{{ product.compare_price }}</span>
+                    <span class="bg-accent text-white px-2 py-1 rounded text-sm">{{ product.discount_percentage }}% OFF</span>
+                    {% endif %}
+                </div>
+                
+                <!-- Stock Status -->
+                <p class="mb-4">
+                    {% if product.in_stock %}
+                        {% if product.is_low_stock %}
+                        <span class="text-orange-500 font-semibold">⚠️ Only {{ product.stock }} left in stock!</span>
+                        {% else %}
+                        <span class="text-green-600">✓ {{ product.stock_status }}</span>
+                        {% endif %}
+                    {% else %}
+                    <span class="text-red-500 font-semibold">✗ Out of Stock</span>
+                    {% endif %}
+                </p>
+                
+                <!-- Short Description -->
+                {% if product.short_description %}
+                <p class="text-gray-600 mb-6">{{ product.short_description }}</p>
+                {% endif %}
+                
+                <!-- Add to Cart -->
+                {% if product.in_stock %}
+                <form 
+                    hx-post="{% url 'cart:cart_add' product.id %}"
+                    hx-swap="none"
+                    class="mb-6"
+                    x-data="{ quantity: 1 }"
+                >
+                    {% csrf_token %}
+                    <div class="flex items-center gap-4 mb-4">
+                        <label class="text-gray-600">Quantity:</label>
+                        <div class="flex items-center border rounded-lg">
+                            <button type="button" @click="quantity = Math.max(1, quantity - 1)" class="px-4 py-2 hover:bg-gray-100">-</button>
+                            <input type="number" name="quantity" x-model="quantity" min="1" max="{{ product.stock }}" class="w-16 text-center border-x py-2">
+                            <button type="button" @click="quantity = Math.min({{ product.stock }}, quantity + 1)" class="px-4 py-2 hover:bg-gray-100">+</button>
+                        </div>
+                    </div>
+                    <div class="flex gap-4">
+                        <button type="submit" class="flex-1 bg-primary hover:bg-green-600 text-white py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2">
+                            <span>🛒</span>
+                            <span>Add to Cart</span>
+                        </button>
+                        <a href="{% url 'orders:checkout' %}" class="flex-1 bg-accent hover:bg-orange-600 text-white py-3 rounded-lg font-semibold transition text-center">
+                            Buy Now
+                        </a>
+                    </div>
+                </form>
+                {% else %}
+                <button disabled class="w-full bg-gray-300 text-gray-500 py-3 rounded-lg font-semibold mb-6 cursor-not-allowed">
+                    Out of Stock
+                </button>
+                {% endif %}
+                
+                <!-- Key Features -->
+                <div class="grid grid-cols-2 gap-4 mb-6 text-sm">
+                    <div class="flex items-center gap-2">
+                        <span>🛡️</span>
+                        <span>{{ product.warranty_months }} Months {{ product.get_warranty_type_display }}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span>🚚</span>
+                        <span>{% if product.free_shipping %}Free Shipping{% else %}{{ product.shipping_time }}{% endif %}</span>
+                    </div>
+                    {% if product.emi_available %}
+                    <div class="flex items-center gap-2">
+                        <span>💳</span>
+                        <span>{% if product.no_cost_emi %}No Cost {% endif %}EMI Available</span>
+                    </div>
+                    {% endif %}
+                    <div class="flex items-center gap-2">
+                        <span>🔄</span>
+                        <span>7 Day Returns</span>
+                    </div>
+                </div>
+                
+                <!-- SKU -->
+                <p class="text-sm text-gray-500">SKU: {{ product.sku }}</p>
+            </div>
+        </div>
+        
+        <!-- Specifications -->
+        {% if product.specs %}
+        <div class="mt-8 pt-8 border-t">
+            <h2 class="text-xl font-bold text-dark mb-4">📋 Specifications</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% for key, value in product.specs.items %}
+                <div class="flex border-b py-2">
+                    <span class="w-1/3 text-gray-500 capitalize">{{ key }}</span>
+                    <span class="w-2/3 font-medium">{{ value }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- EMI Calculator -->
+        {% if product.emi_available and emi_options %}
+        <div class="mt-8 pt-8 border-t">
+            <h2 class="text-xl font-bold text-dark mb-4">💳 EMI Options</h2>
+            <div class="bg-gray-50 rounded-lg p-4">
+                <p class="text-gray-600 mb-4">Pay in easy monthly installments:</p>
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                    {% for emi in emi_options %}
+                    <div class="bg-white rounded-lg p-3 text-center border {% if emi.no_cost %}border-primary{% endif %}">
+                        <div class="text-lg font-bold text-primary">₹{{ emi.amount }}/mo</div>
+                        <div class="text-sm text-gray-500">{{ emi.months }} months</div>
+                        {% if emi.no_cost %}
+                        <div class="text-xs text-primary mt-1">No Cost EMI</div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Description -->
+        <div class="mt-8 pt-8 border-t">
+            <h2 class="text-xl font-bold text-dark mb-4">📖 Description</h2>
+            <div class="prose max-w-none text-gray-600">
+                {{ product.description|linebreaks }}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Related Products -->
+    {% if related_products %}
+    <div class="mt-12">
+        <h2 class="text-2xl font-bold text-dark mb-6">Related Products</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {% for product in related_products %}
+            {% include 'products/partials/product_card.html' with product=product %}
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Reviews -->
+    {% if reviews %}
+    <div class="mt-12">
+        <h2 class="text-2xl font-bold text-dark mb-6">Customer Reviews</h2>
+        <div class="space-y-4">
+            {% for review in reviews %}
+            <div class="bg-white rounded-xl shadow-sm p-6">
+                <div class="flex items-center justify-between mb-2">
+                    <div>
+                        <span class="font-semibold">{{ review.user_name }}</span>
+                        {% if review.is_verified_purchase %}
+                        <span class="text-xs text-green-600 ml-2">✓ Verified Purchase</span>
+                        {% endif %}
+                    </div>
+                    <span class="text-yellow-400">
+                        {% for i in "12345" %}
+                            {% if forloop.counter <= review.rating %}★{% else %}☆{% endif %}
+                        {% endfor %}
+                    </span>
+                </div>
+                <h4 class="font-medium mb-2">{{ review.title }}</h4>
+                <p class="text-gray-600">{{ review.comment }}</p>
+                <p class="text-sm text-gray-400 mt-2">{{ review.created_at|date:"M d, Y" }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- JSON-LD Schema -->
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org/",
+    "@type": "Product",
+    "name": "{{ product.name }}",
+    "description": "{{ product.short_description|default:product.description|truncatewords:30 }}",
+    "sku": "{{ product.sku }}",
+    "brand": {
+        "@type": "Brand",
+        "name": "{{ product.brand.name|default:'Electronic House' }}"
+    },
+    "offers": {
+        "@type": "Offer",
+        "url": "{{ request.build_absolute_uri }}",
+        "priceCurrency": "INR",
+        "price": "{{ product.price }}",
+        "availability": "{% if product.in_stock %}https://schema.org/InStock{% else %}https://schema.org/OutOfStock{% endif %}",
+        "seller": {
+            "@type": "Organization",
+            "name": "Electronic House"
+        }
+    }
+    {% if product.rating > 0 %},
+    "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "{{ product.rating }}",
+        "reviewCount": "{{ product.review_count }}"
+    }
+    {% endif %}
+}
+</script>
+{% endblock %}

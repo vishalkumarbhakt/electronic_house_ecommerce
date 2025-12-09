@@ -1,0 +1,293 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Electronic House{% endblock %} | Electronics Store India</title>
+    <meta name="description" content="{% block meta_description %}Electronic House - Buy latest electronics online. Smartphones, Laptops, Accessories, TVs & more at best prices. Free shipping on orders above ₹999.{% endblock %}">
+    
+    <!-- Tailwind CSS from CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#00A651',
+                        accent: '#FF6B35',
+                        dark: '#1A1F36',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'SF Pro', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    
+    <!-- Alpine.js -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- Custom styles -->
+    <style>
+        [x-cloak] { display: none !important; }
+        .htmx-indicator { opacity: 0; transition: opacity 200ms ease-in; }
+        .htmx-request .htmx-indicator { opacity: 1; }
+        .htmx-request.htmx-indicator { opacity: 1; }
+    </style>
+    
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-gray-50 font-sans" x-data="{ mobileMenuOpen: false, cartOpen: false }">
+    <!-- Top Banner -->
+    <div class="bg-primary text-white text-sm py-2">
+        <div class="container mx-auto px-4 flex justify-between items-center">
+            <span>🚚 Free Shipping on orders above ₹999</span>
+            <div class="hidden md:flex space-x-4">
+                <a href="tel:+911234567890" class="hover:underline">📞 +91 12345 67890</a>
+                <span>|</span>
+                <a href="mailto:support@electronichouse.in" class="hover:underline">✉️ support@electronichouse.in</a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center justify-between py-4">
+                <!-- Logo -->
+                <a href="{% url 'home' %}" class="flex items-center space-x-2">
+                    <span class="text-2xl">🔌</span>
+                    <span class="text-xl font-bold text-dark">Electronic<span class="text-primary">House</span></span>
+                </a>
+                
+                <!-- Search Bar -->
+                <div class="hidden md:flex flex-1 max-w-xl mx-8">
+                    <div class="relative w-full" x-data="{ searchQuery: '', results: [], showResults: false }">
+                        <input 
+                            type="text" 
+                            placeholder="Search products..."
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary"
+                            x-model="searchQuery"
+                            @input.debounce.300ms="
+                                if(searchQuery.length >= 2) {
+                                    fetch(`/products/search/?q=${searchQuery}`)
+                                        .then(r => r.json())
+                                        .then(data => { results = data.products; showResults = true; })
+                                } else { showResults = false; }
+                            "
+                            @focus="if(results.length) showResults = true"
+                            @click.outside="showResults = false"
+                        >
+                        <button class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary">
+                            🔍
+                        </button>
+                        <!-- Search Results Dropdown -->
+                        <div 
+                            x-show="showResults && results.length > 0" 
+                            x-cloak
+                            class="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-96 overflow-y-auto z-50"
+                        >
+                            <template x-for="product in results" :key="product.id">
+                                <a 
+                                    :href="product.url" 
+                                    class="flex items-center p-3 hover:bg-gray-50 border-b last:border-b-0"
+                                >
+                                    <img :src="product.image" class="w-12 h-12 object-contain mr-3" x-show="product.image">
+                                    <div>
+                                        <div class="font-medium text-dark" x-text="product.name"></div>
+                                        <div class="text-sm text-gray-500" x-text="'₹' + product.price"></div>
+                                    </div>
+                                </a>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Nav Links -->
+                <nav class="hidden md:flex items-center space-x-6">
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'users:dashboard' %}" class="text-gray-600 hover:text-primary">
+                            👤 {{ user.username }}
+                        </a>
+                    {% else %}
+                        <a href="{% url 'users:login' %}" class="text-gray-600 hover:text-primary">Login</a>
+                        <a href="{% url 'users:register' %}" class="text-gray-600 hover:text-primary">Register</a>
+                    {% endif %}
+                    
+                    <!-- Cart -->
+                    <a href="{% url 'cart:cart_detail' %}" class="relative flex items-center text-gray-600 hover:text-primary">
+                        <span class="text-xl">🛒</span>
+                        <span class="ml-1">Cart</span>
+                        <span 
+                            id="cart-count"
+                            class="absolute -top-2 -right-2 bg-accent text-white text-xs rounded-full w-5 h-5 flex items-center justify-center"
+                        >{{ cart|length }}</span>
+                    </a>
+                </nav>
+                
+                <!-- Mobile Menu Button -->
+                <button 
+                    class="md:hidden text-2xl"
+                    @click="mobileMenuOpen = !mobileMenuOpen"
+                >
+                    <span x-show="!mobileMenuOpen">☰</span>
+                    <span x-show="mobileMenuOpen" x-cloak>✕</span>
+                </button>
+            </div>
+            
+            <!-- Category Navigation -->
+            <nav class="hidden md:flex items-center space-x-8 py-3 border-t">
+                <a href="{% url 'products:product_list' %}" class="text-gray-700 hover:text-primary font-medium">All Products</a>
+                <a href="{% url 'products:product_list' %}?category=mobiles" class="text-gray-700 hover:text-primary">📱 Mobiles</a>
+                <a href="{% url 'products:product_list' %}?category=laptops" class="text-gray-700 hover:text-primary">💻 Laptops</a>
+                <a href="{% url 'products:product_list' %}?category=accessories" class="text-gray-700 hover:text-primary">🎧 Accessories</a>
+                <a href="{% url 'products:product_list' %}?category=tvs" class="text-gray-700 hover:text-primary">📺 TVs</a>
+                <a href="{% url 'products:product_list' %}?category=appliances" class="text-gray-700 hover:text-primary">🏠 Appliances</a>
+                <a href="{% url 'products:product_list' %}?category=gaming" class="text-gray-700 hover:text-primary">🎮 Gaming</a>
+            </nav>
+        </div>
+        
+        <!-- Mobile Menu -->
+        <div 
+            x-show="mobileMenuOpen" 
+            x-cloak
+            class="md:hidden bg-white border-t"
+            @click.outside="mobileMenuOpen = false"
+        >
+            <div class="container mx-auto px-4 py-4 space-y-4">
+                <input 
+                    type="text" 
+                    placeholder="Search products..."
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                >
+                <div class="flex flex-col space-y-3">
+                    <a href="{% url 'products:product_list' %}" class="text-gray-700">All Products</a>
+                    <a href="{% url 'products:product_list' %}?category=mobiles" class="text-gray-700">📱 Mobiles</a>
+                    <a href="{% url 'products:product_list' %}?category=laptops" class="text-gray-700">💻 Laptops</a>
+                    <a href="{% url 'products:product_list' %}?category=accessories" class="text-gray-700">🎧 Accessories</a>
+                    <a href="{% url 'cart:cart_detail' %}" class="text-gray-700">🛒 Cart ({{ cart|length }})</a>
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'users:dashboard' %}" class="text-gray-700">👤 {{ user.username }}</a>
+                        <a href="{% url 'users:logout' %}" class="text-gray-700">Logout</a>
+                    {% else %}
+                        <a href="{% url 'users:login' %}" class="text-gray-700">Login</a>
+                        <a href="{% url 'users:register' %}" class="text-gray-700">Register</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Messages -->
+    {% if messages %}
+    <div class="container mx-auto px-4 mt-4">
+        {% for message in messages %}
+        <div 
+            class="p-4 rounded-lg mb-2 {% if message.tags == 'error' %}bg-red-100 text-red-700{% elif message.tags == 'success' %}bg-green-100 text-green-700{% else %}bg-blue-100 text-blue-700{% endif %}"
+            x-data="{ show: true }"
+            x-show="show"
+            x-transition
+        >
+            <div class="flex justify-between items-center">
+                <span>{{ message }}</span>
+                <button @click="show = false" class="text-lg">&times;</button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <!-- Main Content -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Footer -->
+    <footer class="bg-dark text-white mt-16">
+        <div class="container mx-auto px-4 py-12">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <!-- Company Info -->
+                <div>
+                    <h3 class="text-xl font-bold mb-4">Electronic<span class="text-primary">House</span></h3>
+                    <p class="text-gray-400 mb-4">Your trusted destination for electronics in India. Quality products, best prices, fast delivery.</p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-white">📘</a>
+                        <a href="#" class="text-gray-400 hover:text-white">🐦</a>
+                        <a href="#" class="text-gray-400 hover:text-white">📷</a>
+                    </div>
+                </div>
+                
+                <!-- Quick Links -->
+                <div>
+                    <h4 class="font-semibold mb-4">Quick Links</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="{% url 'products:product_list' %}" class="hover:text-white">All Products</a></li>
+                        <li><a href="#" class="hover:text-white">About Us</a></li>
+                        <li><a href="#" class="hover:text-white">Contact</a></li>
+                        <li><a href="#" class="hover:text-white">FAQ</a></li>
+                    </ul>
+                </div>
+                
+                <!-- Categories -->
+                <div>
+                    <h4 class="font-semibold mb-4">Categories</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="{% url 'products:product_list' %}?category=mobiles" class="hover:text-white">Mobiles</a></li>
+                        <li><a href="{% url 'products:product_list' %}?category=laptops" class="hover:text-white">Laptops</a></li>
+                        <li><a href="{% url 'products:product_list' %}?category=accessories" class="hover:text-white">Accessories</a></li>
+                        <li><a href="{% url 'products:product_list' %}?category=gaming" class="hover:text-white">Gaming</a></li>
+                    </ul>
+                </div>
+                
+                <!-- Contact -->
+                <div>
+                    <h4 class="font-semibold mb-4">Contact Us</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li>📍 Lucknow, Uttar Pradesh, India</li>
+                        <li>📞 +91 12345 67890</li>
+                        <li>✉️ support@electronichouse.in</li>
+                        <li>🕐 Mon-Sat: 10AM - 8PM</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+                <p>&copy; 2024 Electronic House. All rights reserved.</p>
+                <div class="mt-2 space-x-4">
+                    <a href="#" class="hover:text-white">Privacy Policy</a>
+                    <a href="#" class="hover:text-white">Terms of Service</a>
+                    <a href="#" class="hover:text-white">Refund Policy</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Toast Notifications -->
+    <div 
+        id="toast-container" 
+        class="fixed bottom-4 right-4 z-50 space-y-2"
+        x-data="{ toasts: [] }"
+        @show-toast.window="
+            toasts.push({ id: Date.now(), message: $event.detail.message, type: $event.detail.type || 'success' });
+            setTimeout(() => toasts.shift(), 3000);
+        "
+    >
+        <template x-for="toast in toasts" :key="toast.id">
+            <div 
+                class="px-4 py-3 rounded-lg shadow-lg"
+                :class="toast.type === 'error' ? 'bg-red-500 text-white' : 'bg-primary text-white'"
+                x-transition
+            >
+                <span x-text="toast.message"></span>
+            </div>
+        </template>
+    </div>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

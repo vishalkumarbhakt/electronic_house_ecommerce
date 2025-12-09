@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+
+{% block title %}Order Confirmed - {{ order.order_number }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-2xl mx-auto">
+        <!-- Success Message -->
+        <div class="bg-white rounded-xl shadow-sm p-8 text-center mb-8">
+            <div class="text-6xl mb-4">✅</div>
+            <h1 class="text-2xl font-bold text-dark mb-2">Order Placed Successfully!</h1>
+            <p class="text-gray-600 mb-4">Thank you for shopping with Electronic House</p>
+            <p class="text-lg">
+                Order Number: <span class="font-bold text-primary">{{ order.order_number }}</span>
+            </p>
+        </div>
+        
+        <!-- Order Details -->
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-8">
+            <h2 class="text-xl font-bold text-dark mb-4">📦 Order Details</h2>
+            
+            <div class="space-y-4 mb-6">
+                {% for item in order.items.all %}
+                <div class="flex items-center border-b pb-4 last:border-b-0 last:pb-0">
+                    <div class="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
+                        {% if item.product_image %}
+                        <img src="{{ item.product_image }}" alt="" class="max-w-full max-h-full object-contain">
+                        {% else %}
+                        <span class="text-2xl">📦</span>
+                        {% endif %}
+                    </div>
+                    <div class="ml-4 flex-1">
+                        <p class="font-medium">{{ item.product_name }}</p>
+                        <p class="text-sm text-gray-500">Qty: {{ item.quantity }} × ₹{{ item.product_price }}</p>
+                    </div>
+                    <p class="font-semibold">₹{{ item.total }}</p>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div class="border-t pt-4 space-y-2">
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Subtotal</span>
+                    <span>₹{{ order.subtotal }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Shipping</span>
+                    <span>{% if order.shipping_cost == 0 %}FREE{% else %}₹{{ order.shipping_cost }}{% endif %}</span>
+                </div>
+                {% if order.discount_amount > 0 %}
+                <div class="flex justify-between text-green-600">
+                    <span>Discount</span>
+                    <span>-₹{{ order.discount_amount }}</span>
+                </div>
+                {% endif %}
+                <div class="flex justify-between text-xl font-bold border-t pt-2">
+                    <span>Total</span>
+                    <span class="text-primary">₹{{ order.total }}</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Shipping Address -->
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-8">
+            <h2 class="text-xl font-bold text-dark mb-4">🚚 Shipping Address</h2>
+            <p class="font-medium">{{ order.shipping_first_name }} {{ order.shipping_last_name }}</p>
+            <p class="text-gray-600">{{ order.shipping_address }}</p>
+            <p class="text-gray-600">{{ order.shipping_city }}, {{ order.shipping_state }} - {{ order.shipping_pincode }}</p>
+            <p class="text-gray-600">Phone: {{ order.shipping_phone }}</p>
+        </div>
+        
+        <!-- Payment Info -->
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-8">
+            <h2 class="text-xl font-bold text-dark mb-4">💳 Payment Information</h2>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <p class="text-gray-600">Payment Method</p>
+                    <p class="font-medium">{{ order.get_payment_method_display }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-600">Payment Status</p>
+                    <p class="font-medium 
+                        {% if order.payment_status == 'paid' %}text-green-600
+                        {% elif order.payment_status == 'pending' %}text-orange-500
+                        {% else %}text-red-500{% endif %}
+                    ">
+                        {{ order.get_payment_status_display }}
+                    </p>
+                </div>
+            </div>
+            {% if order.is_emi %}
+            <div class="mt-4 p-4 bg-green-50 rounded-lg">
+                <p class="font-medium text-green-800">EMI: ₹{{ order.emi_monthly_amount }}/month × {{ order.emi_months }} months</p>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Next Steps -->
+        <div class="bg-gray-100 rounded-xl p-6 text-center">
+            <h3 class="font-semibold text-dark mb-2">What's Next?</h3>
+            <p class="text-gray-600 mb-4">We've sent a confirmation email to <strong>{{ order.billing_email }}</strong></p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="{% url 'orders:order_detail' order.order_number %}" class="bg-primary hover:bg-green-600 text-white px-6 py-2 rounded-lg font-medium transition">
+                    Track Order
+                </a>
+                <a href="{% url 'products:product_list' %}" class="border border-primary text-primary hover:bg-primary hover:text-white px-6 py-2 rounded-lg font-medium transition">
+                    Continue Shopping
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

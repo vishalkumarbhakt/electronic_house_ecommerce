@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ current_category|default:'All Products' }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Breadcrumb -->
+    <nav class="text-sm mb-6">
+        <a href="{% url 'home' %}" class="text-gray-500 hover:text-primary">Home</a>
+        <span class="mx-2 text-gray-400">/</span>
+        <span class="text-dark">{{ current_category|default:'All Products' }}</span>
+    </nav>
+    
+    <div class="flex flex-col lg:flex-row gap-8">
+        <!-- Filters Sidebar -->
+        <aside class="lg:w-64 flex-shrink-0">
+            <div class="bg-white rounded-xl shadow-sm p-6 sticky top-24" x-data="{ showFilters: false }">
+                <div class="flex justify-between items-center lg:block">
+                    <h2 class="font-bold text-lg mb-4">Filters</h2>
+                    <button @click="showFilters = !showFilters" class="lg:hidden text-primary">
+                        <span x-show="!showFilters">Show Filters</span>
+                        <span x-show="showFilters" x-cloak>Hide Filters</span>
+                    </button>
+                </div>
+                
+                <form 
+                    action="{% url 'products:product_list' %}"
+                    method="get"
+                    class="space-y-6"
+                    :class="{ 'hidden lg:block': !showFilters }"
+                    x-show="showFilters || window.innerWidth >= 1024"
+                >
+                    <!-- Search -->
+                    {% if search_query %}
+                    <input type="hidden" name="q" value="{{ search_query }}">
+                    <div class="text-sm text-gray-600">
+                        Results for: <strong>"{{ search_query }}"</strong>
+                        <a href="{% url 'products:product_list' %}" class="text-primary ml-2">Clear</a>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Categories -->
+                    <div>
+                        <h3 class="font-semibold mb-3">Category</h3>
+                        <div class="space-y-2">
+                            <label class="flex items-center">
+                                <input type="radio" name="category" value="" {% if not current_category %}checked{% endif %} class="mr-2">
+                                <span>All Categories</span>
+                            </label>
+                            {% for category in categories %}
+                            <label class="flex items-center">
+                                <input type="radio" name="category" value="{{ category.slug }}" {% if current_category == category.slug %}checked{% endif %} class="mr-2">
+                                <span>{{ category.name }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <!-- Brands -->
+                    {% if brands %}
+                    <div>
+                        <h3 class="font-semibold mb-3">Brand</h3>
+                        <div class="space-y-2 max-h-48 overflow-y-auto">
+                            {% for brand in brands %}
+                            <label class="flex items-center">
+                                <input type="checkbox" name="brand" value="{{ brand.slug }}" {% if current_brand == brand.slug %}checked{% endif %} class="mr-2">
+                                <span>{{ brand.name }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Price Range -->
+                    <div>
+                        <h3 class="font-semibold mb-3">Price Range</h3>
+                        <div class="flex items-center gap-2">
+                            <input 
+                                type="number" 
+                                name="min_price" 
+                                placeholder="Min" 
+                                value="{{ request.GET.min_price }}"
+                                class="w-full px-3 py-2 border rounded"
+                            >
+                            <span>-</span>
+                            <input 
+                                type="number" 
+                                name="max_price" 
+                                placeholder="Max" 
+                                value="{{ request.GET.max_price }}"
+                                class="w-full px-3 py-2 border rounded"
+                            >
+                        </div>
+                    </div>
+                    
+                    <!-- In Stock -->
+                    <div>
+                        <label class="flex items-center">
+                            <input type="checkbox" name="in_stock" value="true" {% if request.GET.in_stock %}checked{% endif %} class="mr-2">
+                            <span>In Stock Only</span>
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-green-600 transition">
+                        Apply Filters
+                    </button>
+                </form>
+            </div>
+        </aside>
+        
+        <!-- Products Grid -->
+        <main class="flex-1">
+            <!-- Toolbar -->
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                <p class="text-gray-600">
+                    <span class="font-semibold">{{ page_obj.paginator.count }}</span> products found
+                </p>
+                
+                <div class="flex items-center gap-4">
+                    <label class="text-gray-600">Sort by:</label>
+                    <select 
+                        class="px-3 py-2 border rounded-lg"
+                        onchange="window.location.href = '?sort=' + this.value + '&{{ request.GET.urlencode }}'"
+                    >
+                        <option value="-created_at" {% if current_sort == '-created_at' %}selected{% endif %}>Newest</option>
+                        <option value="price" {% if current_sort == 'price' %}selected{% endif %}>Price: Low to High</option>
+                        <option value="-price" {% if current_sort == '-price' %}selected{% endif %}>Price: High to Low</option>
+                        <option value="-rating" {% if current_sort == '-rating' %}selected{% endif %}>Top Rated</option>
+                        <option value="name" {% if current_sort == 'name' %}selected{% endif %}>Name: A-Z</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Products -->
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" id="products-grid">
+                {% for product in products %}
+                {% include 'products/partials/product_card.html' with product=product %}
+                {% empty %}
+                <div class="col-span-full text-center py-12">
+                    <div class="text-6xl mb-4">🔍</div>
+                    <h3 class="text-xl font-semibold text-gray-600 mb-2">No products found</h3>
+                    <p class="text-gray-500 mb-4">Try adjusting your filters or search terms.</p>
+                    <a href="{% url 'products:product_list' %}" class="text-primary hover:underline">View all products</a>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Pagination -->
+            {% if page_obj.has_other_pages %}
+            <nav class="flex justify-center mt-8">
+                <ul class="flex items-center gap-2">
+                    {% if page_obj.has_previous %}
+                    <li>
+                        <a href="?page={{ page_obj.previous_page_number }}&{{ request.GET.urlencode }}" class="px-4 py-2 border rounded-lg hover:bg-gray-100">
+                            ← Previous
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if num == page_obj.number %}
+                        <li><span class="px-4 py-2 bg-primary text-white rounded-lg">{{ num }}</span></li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li><a href="?page={{ num }}&{{ request.GET.urlencode }}" class="px-4 py-2 border rounded-lg hover:bg-gray-100">{{ num }}</a></li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                    <li>
+                        <a href="?page={{ page_obj.next_page_number }}&{{ request.GET.urlencode }}" class="px-4 py-2 border rounded-lg hover:bg-gray-100">
+                            Next →
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </main>
+    </div>
+</div>
+{% endblock %}

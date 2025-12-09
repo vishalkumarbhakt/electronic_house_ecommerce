@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block title %}My Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-2xl font-bold text-dark mb-8">👋 Welcome, {{ user.username }}!</h1>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Sidebar -->
+        <div class="lg:col-span-1">
+            <div class="bg-white rounded-xl shadow-sm p-6">
+                <div class="text-center mb-6">
+                    <div class="w-20 h-20 bg-primary text-white rounded-full flex items-center justify-center mx-auto text-3xl mb-4">
+                        {{ user.username|first|upper }}
+                    </div>
+                    <h2 class="font-semibold">{{ user.username }}</h2>
+                    <p class="text-sm text-gray-500">{{ user.email }}</p>
+                </div>
+                
+                <nav class="space-y-2">
+                    <a href="{% url 'users:dashboard' %}" class="block px-4 py-2 rounded-lg bg-primary text-white">
+                        📊 Dashboard
+                    </a>
+                    <a href="{% url 'orders:order_history' %}" class="block px-4 py-2 rounded-lg hover:bg-gray-100">
+                        📦 My Orders
+                    </a>
+                    <a href="{% url 'users:profile' %}" class="block px-4 py-2 rounded-lg hover:bg-gray-100">
+                        👤 Profile
+                    </a>
+                    <a href="{% url 'users:logout' %}" class="block px-4 py-2 rounded-lg hover:bg-gray-100 text-red-500">
+                        🚪 Logout
+                    </a>
+                </nav>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Recent Orders -->
+            <div class="bg-white rounded-xl shadow-sm p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold text-dark">Recent Orders</h2>
+                    <a href="{% url 'orders:order_history' %}" class="text-primary hover:underline">View All →</a>
+                </div>
+                
+                {% if orders %}
+                <div class="space-y-4">
+                    {% for order in orders %}
+                    <div class="flex items-center justify-between border-b pb-4 last:border-b-0">
+                        <div>
+                            <p class="font-medium">{{ order.order_number }}</p>
+                            <p class="text-sm text-gray-500">{{ order.created_at|date:"M d, Y" }} • {{ order.item_count }} items</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-semibold">₹{{ order.total }}</p>
+                            <span class="text-sm px-2 py-1 rounded
+                                {% if order.status == 'delivered' %}bg-green-100 text-green-700
+                                {% elif order.status == 'shipped' %}bg-blue-100 text-blue-700
+                                {% else %}bg-yellow-100 text-yellow-700{% endif %}
+                            ">
+                                {{ order.get_status_display }}
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-gray-500 text-center py-8">No orders yet. Start shopping!</p>
+                {% endif %}
+            </div>
+            
+            <!-- Wishlist -->
+            <div class="bg-white rounded-xl shadow-sm p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold text-dark">Wishlist</h2>
+                </div>
+                
+                {% if wishlist %}
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {% for item in wishlist %}
+                    <div class="border rounded-lg p-3">
+                        <div class="aspect-square bg-gray-100 rounded mb-2 flex items-center justify-center">
+                            {% if item.product.main_image %}
+                            <img src="{{ item.product.main_image.url }}" alt="" class="max-w-full max-h-full object-contain">
+                            {% else %}
+                            <span class="text-3xl">📦</span>
+                            {% endif %}
+                        </div>
+                        <p class="text-sm font-medium line-clamp-1">{{ item.product.name }}</p>
+                        <p class="text-primary font-semibold">₹{{ item.product.price }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-gray-500 text-center py-8">Your wishlist is empty.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
